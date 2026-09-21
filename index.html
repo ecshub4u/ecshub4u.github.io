@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECS Drive — Your College Files. One Place.</title>
+<meta name="description" content="ECS Drive is a public file portal for ECS students to store and share coursework, no login required.">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="icon" type="image/svg+xml" href="assets/logo-icon.svg">
+<link rel="stylesheet" href="css/styles.css">
+<script>
+  // The one line to change when pointing this at a deployed backend
+  // instead of local dev -- see backend/README.md and docs/Phases.md
+  // (Phase 10: "configure production API URL").
+  window.ECS_DRIVE_API_BASE = "https://ecs-drive-api.ecshub4u.workers.dev";
+</script>
+</head>
+<body>
+
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<div id="app-shell">
+
+  <!-- ============ SIDEBAR (left panel) — folder browser ============ -->
+  <aside class="sidebar" aria-label="Folders">
+    <div class="sidebar-header">
+      <a href="#" class="brand-logo" data-nav="dashboard" aria-label="ECS Drive home">
+        <svg viewBox="0 0 120 120" width="24" height="24" aria-hidden="true">
+          <circle cx="42" cy="56" r="14" fill="currentColor"/>
+          <circle cx="60" cy="48" r="17" fill="currentColor"/>
+          <circle cx="78" cy="56" r="14" fill="currentColor"/>
+          <rect x="32" y="58" width="56" height="26" rx="13" fill="currentColor"/>
+          <rect x="46" y="54" width="28" height="30" rx="3" fill="var(--wa-green)"/>
+          <polygon points="74,54 74,64 64,54" fill="currentColor"/>
+          <rect x="52" y="68" width="16" height="3" rx="1.5" fill="currentColor"/>
+          <rect x="52" y="76" width="16" height="3" rx="1.5" fill="currentColor"/>
+        </svg>
+      </a>
+      <div class="brand-text">
+        <p class="brand-title">ECS Drive</p>
+        <p class="brand-sub">Your college files. One place.</p>
+      </div>
+      <button class="icon-btn icon-btn-accent" id="open-create-folder" aria-label="New folder" title="New folder">
+        <i class="fa-solid fa-folder-plus" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div class="search-bar" id="dashboard-search-field">
+      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+      <label for="search-input" class="sr-only-label">Search folders</label>
+      <input type="text" id="search-input" placeholder="Search folders…" autocomplete="off">
+    </div>
+
+    <!-- ============ DASHBOARD: folder list (always visible on desktop) ============ -->
+    <div id="dashboard-view" class="sidebar-list scroll">
+      <div class="error-banner" id="dashboard-error" role="alert" hidden>
+        <p id="dashboard-error-message"></p>
+        <button class="btn btn-secondary" id="dashboard-retry">Try again</button>
+      </div>
+
+      <div id="folder-skeleton-grid" hidden aria-hidden="true">
+        <div class="skeleton-row"></div>
+        <div class="skeleton-row"></div>
+        <div class="skeleton-row"></div>
+      </div>
+
+      <span class="result-count" id="result-count" aria-live="polite"></span>
+      <div class="folder-grid" id="folder-grid" aria-live="polite"></div>
+
+      <div class="empty-state" id="empty-state" hidden>
+        <i class="fa-regular fa-folder-open" aria-hidden="true"></i>
+        <h3 id="empty-state-title">No folders match your search</h3>
+        <p id="empty-state-body">Try a different name, or create a new folder of your own.</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ CONTENT PANEL (right side) ============ -->
+  <main class="content-panel" id="main-content">
+
+    <!-- Shown when no folder is selected yet (desktop default) -->
+    <div class="content-empty" id="content-empty">
+      <div class="ce-icon"><i class="fa-solid fa-folder-open" aria-hidden="true"></i></div>
+      <h2 class="ce-title">Select a folder</h2>
+      <p class="ce-sub">Choose a folder from the list on the left, or create a new one to get started.</p>
+    </div>
+
+    <!-- ============ FOLDER DETAIL VIEW ============ -->
+    <section id="folder-view" hidden>
+      <div class="breadcrumb-bar">
+        <a href="#" class="back-link" data-nav="dashboard" aria-label="Back to all folders">
+          <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+        </a>
+        <a href="#" class="crumb" data-nav="dashboard">All folders</a>
+        <span class="crumb-sep" aria-hidden="true">›</span>
+        <span class="crumb current" id="breadcrumb-current"></span>
+      </div>
+
+      <div class="skeleton-block" id="folder-loading" hidden aria-hidden="true">
+        <div class="skeleton-line skeleton-line-title"></div>
+        <div class="skeleton-line skeleton-line-wide"></div>
+        <div class="skeleton-line skeleton-line-bar"></div>
+      </div>
+
+      <div class="error-banner" id="folder-error" role="alert" hidden>
+        <p id="folder-error-message"></p>
+        <button class="btn btn-secondary" id="folder-retry">Try again</button>
+      </div>
+
+      <div id="folder-content" hidden>
+        <div class="folder-header">
+          <div class="folder-header-title">
+            <h1 id="folder-title"></h1>
+            <span class="lock-pill" id="folder-lock-pill" hidden>
+              <i class="fa-solid fa-lock" aria-hidden="true"></i>
+              Protected
+            </span>
+            <span class="owner-badge" id="manage-badge" hidden>You manage this folder</span>
+          </div>
+
+          <div class="quota-track"><div class="quota-fill" id="folder-quota-fill"></div></div>
+          <div class="quota-label"><span id="folder-quota-used"></span><span id="folder-quota-pct"></span></div>
+
+          <div class="folder-header-actions" id="folder-owner-actions" hidden>
+            <button class="btn-text" id="rename-folder-btn"><i class="fa-solid fa-pen" aria-hidden="true"></i> Rename</button>
+            <button class="btn-text" id="rotate-token-btn"><i class="fa-solid fa-key" aria-hidden="true"></i> Rotate token</button>
+            <button class="btn-text" id="change-password-btn" hidden><i class="fa-solid fa-key" aria-hidden="true"></i> Change password</button>
+            <button class="btn-text" id="sign-out-btn" hidden><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sign out</button>
+            <button class="btn-text btn-text-danger" id="delete-folder-btn"><i class="fa-solid fa-trash" aria-hidden="true"></i> Delete folder</button>
+          </div>
+
+          <!-- For visitors: how the owner signs in from any device. -->
+          <div class="folder-header-actions" id="owner-login-row" hidden>
+            <button class="btn-text" id="owner-login-btn"><i class="fa-solid fa-user-shield" aria-hidden="true"></i> I'm the owner — manage this folder</button>
+          </div>
+        </div>
+
+        <!-- Shown when the folder is protected and this browser has neither
+             an unlock token nor a management token for it yet. -->
+        <div class="unlock-panel" id="unlock-panel" hidden>
+          <h2><i class="fa-solid fa-lock" aria-hidden="true"></i> This folder is password protected</h2>
+          <p class="modal-sub">Enter the password to view and download its files.</p>
+          <div class="modal-error" id="inline-unlock-error" role="alert" hidden></div>
+          <form id="inline-unlock-form">
+            <div class="field">
+              <label for="inline-unlock-password">Password</label>
+              <input type="password" id="inline-unlock-password" required autocomplete="off">
+            </div>
+            <button type="submit" class="btn btn-primary">Unlock</button>
+          </form>
+          <button class="btn-text" id="manage-instead-btn">I'm the owner — manage with my token instead</button>
+        </div>
+
+        <!-- Owner sign-in. Folders made with a manager password ask for it here;
+             older folders (made before manager passwords) still take their token. -->
+        <div class="manage-panel" id="manage-panel" hidden>
+          <div id="manage-password-mode" hidden>
+            <h2><i class="fa-solid fa-user-shield" aria-hidden="true"></i> Manager sign-in</h2>
+            <p class="modal-sub">Enter this folder's manager password to rename, delete and manage it.</p>
+            <div class="modal-error" id="manage-login-error" role="alert" hidden></div>
+            <form id="manage-login-form">
+              <div class="field">
+                <label for="manage-login-password">Manager password</label>
+                <input type="password" id="manage-login-password" autocomplete="current-password" required>
+              </div>
+              <button type="submit" class="btn btn-secondary">Sign in</button>
+            </form>
+            <button type="button" class="btn-text" id="forgot-password-btn">Forgot the manager password?</button>
+          </div>
+
+          <div id="manage-token-mode" hidden>
+            <p class="modal-sub">This folder was made before manager passwords existed. Paste its management token to manage it as the owner.</p>
+            <div class="modal-error" id="manage-error" role="alert" hidden></div>
+            <form id="manage-form">
+              <div class="field">
+                <label for="manage-token-input">Management token</label>
+                <input type="text" id="manage-token-input" placeholder="Paste your management token" autocomplete="off" required>
+              </div>
+              <button type="submit" class="btn btn-secondary">Manage this folder</button>
+            </form>
+          </div>
+
+          <button type="button" class="btn-text" id="manage-cancel-btn">Cancel</button>
+        </div>
+
+        <div id="folder-body" hidden>
+          <div class="section-row">
+            <h2>Files</h2>
+          </div>
+
+          <div class="upload-dropzone" id="upload-dropzone" hidden>
+            <label for="file-input">
+              <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+              <span>Drag files or a whole folder here, or <span class="upload-browse-text">choose files</span></span>
+            </label>
+            <label for="folder-input" class="upload-folder-link">
+              or <span class="upload-browse-text">choose a folder</span>
+            </label>
+            <input type="file" id="file-input" multiple>
+            <input type="file" id="folder-input" webkitdirectory multiple>
+          </div>
+          <p class="field-hint" id="upload-disabled-hint" hidden>Only this folder's owner can upload here.</p>
+
+          <div id="upload-progress-list" aria-live="polite"></div>
+
+          <nav class="path-bar" id="path-bar" aria-label="Folder path" hidden></nav>
+
+          <div class="skeleton-block" id="file-list-loading" hidden aria-hidden="true">
+            <div class="skeleton-line skeleton-line-wide"></div>
+            <div class="skeleton-line skeleton-line-wide"></div>
+          </div>
+
+          <ul class="file-list" id="file-list" aria-live="polite"></ul>
+
+          <div class="empty-state" id="file-empty-state" hidden>
+            <i class="fa-regular fa-file" aria-hidden="true"></i>
+            <h3>No files yet</h3>
+            <p>Be the first to add something to this folder.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+</div>
+
+<!-- Create folder modal -->
+<div class="modal-overlay" id="create-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="create-modal-title">
+    <h2 id="create-modal-title">Create a folder</h2>
+    <p class="modal-sub">You'll set a manager password — that's how you rename or delete this folder and its files later, from any device.</p>
+
+    <div class="modal-error" id="create-error" role="alert" hidden></div>
+
+    <form id="create-form">
+      <div class="field">
+        <label for="folder-name-input">Folder name</label>
+        <input type="text" id="folder-name-input" maxlength="80" placeholder="e.g. Priya — Semester 4 Notes" required>
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="protect-toggle">
+        <label for="protect-toggle">Protect this folder with a password</label>
+      </div>
+
+      <div class="field" id="password-field" hidden>
+        <label for="folder-password-input">Folder password</label>
+        <input type="password" id="folder-password-input" placeholder="Choose a password" autocomplete="new-password">
+        <p class="field-hint">Anyone with this password can open the folder. It won't be recoverable if lost.</p>
+      </div>
+
+      <div class="setup-block">
+        <h3>Manager password</h3>
+        <p class="field-hint">Only you (the owner) use this. It's different from the viewing password above.</p>
+        <div class="field">
+          <label for="manager-password-input">Manager password</label>
+          <input type="password" id="manager-password-input" minlength="6" maxlength="100" placeholder="At least 6 characters" autocomplete="new-password" required>
+        </div>
+      </div>
+
+      <div class="setup-block">
+        <h3>If you forget it</h3>
+        <p class="field-hint">Pick 2 questions only you can answer. If you forget the manager password, answering them lets you set a new one. Capital letters and spacing don't matter.</p>
+        <div class="field">
+          <label for="recovery-q1">Question 1</label>
+          <select id="recovery-q1"></select>
+          <input type="text" id="recovery-q1-custom" maxlength="120" placeholder="Type your own question" hidden>
+          <input type="text" id="recovery-a1" maxlength="100" placeholder="Your answer" autocomplete="off" required>
+        </div>
+        <div class="field">
+          <label for="recovery-q2">Question 2</label>
+          <select id="recovery-q2"></select>
+          <input type="text" id="recovery-q2-custom" maxlength="120" placeholder="Type your own question" hidden>
+          <input type="text" id="recovery-a2" maxlength="100" placeholder="Your answer" autocomplete="off" required>
+        </div>
+      </div>
+
+      <p class="field-hint">Each folder gets a 1&nbsp;GB storage quota, checked on the server for every upload.</p>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="cancel-create">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          <span class="btn-label">Create folder</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Token reveal modal -- reused for both "folder created" and "token
+     rotated", since both need the exact same "save this now, it won't be
+     shown again" treatment. -->
+<div class="modal-overlay" id="token-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="token-modal-title">
+    <h2 id="token-modal-title">Folder created</h2>
+    <p class="modal-sub" id="token-modal-message">Save this management token now — it's the only way to manage this folder later, and it won't be shown again.</p>
+    <div class="token-box">
+      <code id="token-value"></code>
+      <button type="button" class="btn btn-secondary" id="copy-token-btn">Copy</button>
+    </div>
+    <p class="field-hint" id="copy-confirmation" role="status" aria-live="polite"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" id="token-continue-btn">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Forgot the manager password: answer the recovery questions, set a new one -->
+<div class="modal-overlay" id="recovery-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="recovery-modal-title">
+    <h2 id="recovery-modal-title">Set a new manager password</h2>
+    <p class="modal-sub">Answer the two questions you chose when you created this folder. Capital letters and spacing don't matter.</p>
+    <div class="modal-error" id="recovery-error" role="alert" hidden></div>
+    <form id="recovery-form">
+      <div class="field">
+        <label for="recovery-answer-1" id="recovery-question-1"></label>
+        <input type="text" id="recovery-answer-1" autocomplete="off" required>
+      </div>
+      <div class="field">
+        <label for="recovery-answer-2" id="recovery-question-2"></label>
+        <input type="text" id="recovery-answer-2" autocomplete="off" required>
+      </div>
+      <div class="field">
+        <label for="recovery-new-password">New manager password</label>
+        <input type="password" id="recovery-new-password" minlength="6" maxlength="100" placeholder="At least 6 characters" autocomplete="new-password" required>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="cancel-recovery">Cancel</button>
+        <button type="submit" class="btn btn-primary">Set new password</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Change the manager password while signed in -->
+<div class="modal-overlay" id="change-password-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="change-password-modal-title">
+    <h2 id="change-password-modal-title">Change manager password</h2>
+    <p class="modal-sub">Any other phone or laptop signed in as manager will be signed out.</p>
+    <div class="modal-error" id="change-password-error" role="alert" hidden></div>
+    <form id="change-password-form">
+      <div class="field">
+        <label for="current-manager-password">Current manager password</label>
+        <input type="password" id="current-manager-password" autocomplete="current-password" required>
+      </div>
+      <div class="field">
+        <label for="new-manager-password">New manager password</label>
+        <input type="password" id="new-manager-password" minlength="6" maxlength="100" placeholder="At least 6 characters" autocomplete="new-password" required>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="cancel-change-password">Cancel</button>
+        <button type="submit" class="btn btn-primary">Change password</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete folder confirmation -->
+<div class="modal-overlay" id="delete-folder-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="delete-folder-modal-title">
+    <h2 id="delete-folder-modal-title">Delete this folder?</h2>
+    <p class="modal-sub">This moves the folder and all its files to Drive's trash. This can't be undone from ECS Drive.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" id="cancel-delete-folder">Cancel</button>
+      <button type="button" class="btn btn-danger" id="confirm-delete-folder">Delete folder</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

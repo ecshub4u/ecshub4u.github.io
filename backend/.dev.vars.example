@@ -1,0 +1,18 @@
+# Copy this file to .dev.vars for local development.
+# .dev.vars is gitignored — never commit the real one.
+#
+# Required from Phase 3 onward (Google Drive access). See
+# backend/README.md > "Google Drive setup" for how to obtain these.
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
+GOOGLE_REFRESH_TOKEN=your-refresh-token
+
+# Required from Phase 4 onward. Any long random string — used to sign
+# temporary unlock tokens. Generate one with:
+#   openssl rand -base64 32
+UNLOCK_SESSION_SECRET=replace-with-a-long-random-string
+#
+# Non-secret settings (ALLOWED_ORIGIN, GOOGLE_ROOT_FOLDER_ID) live in
+# wrangler.toml instead, since they're safe to commit.
+#
+# Phase 5 will add file-related secrets here too, if any turn out to be needed.

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 110" role="img" aria-label="ECS Drive">
+  <g transform="translate(10,12) scale(0.72)">
+    <circle cx="60" cy="60" r="54" fill="#00a884"/>
+    <circle cx="42" cy="56" r="14" fill="#ffffff"/>
+    <circle cx="60" cy="48" r="17" fill="#ffffff"/>
+    <circle cx="78" cy="56" r="14" fill="#ffffff"/>
+    <rect x="32" y="58" width="56" height="26" rx="13" fill="#ffffff"/>
+    <rect x="46" y="54" width="28" height="30" rx="3" fill="#00a884"/>
+    <polygon points="74,54 74,64 64,54" fill="#ffffff"/>
+    <rect x="52" y="68" width="16" height="3" rx="1.5" fill="#ffffff"/>
+    <rect x="52" y="76" width="16" height="3" rx="1.5" fill="#ffffff"/>
+  </g>
+  <text x="110" y="56" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="34" font-weight="700" fill="#111b21">ECS Drive</text>
+  <text x="110" y="82" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#667781">Your college files. One place.</text>
+</svg>

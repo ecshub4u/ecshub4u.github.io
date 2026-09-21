@@ -1,0 +1,23 @@
+name = "ecs-drive-api"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+
+# Non-secret configuration. Real secrets (Google Drive service-account
+# credentials, etc. — added in Phase 5) are set with `wrangler secret put`
+# and must never be written to this file.
+[vars]
+# Comma-separated list of origins allowed to call this API (CORS). Add the
+# production frontend's origin(s) here once deployed, alongside local dev.
+ALLOWED_ORIGINS = "http://localhost:8000,https://ecshub4u.github.io"
+# The Drive folder that will contain every student folder ECS Drive
+# creates. Not secret — it's just an ID — so it's fine to commit. Create it
+# once by hand in the owner's Google Drive and paste its ID here.
+GOOGLE_ROOT_FOLDER_ID = "1GK5UGvJzTyALE8dJ59L0Nb4_bMWhYfMx"
+
+# Metadata database (folders, files, rate limits). See ../schema.sql.
+# After running `wrangler d1 create ecs-drive-db`, paste the database_id
+# it prints into database_id below.
+[[d1_databases]]
+binding = "DB"
+database_name = "ecs-drive-db"
+database_id = "667594af-db7f-4dfd-88ef-578cc8c16857"

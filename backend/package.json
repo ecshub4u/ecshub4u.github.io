@@ -1,0 +1,23 @@
+{
+  "name": "ecs-drive-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate:local": "wrangler d1 execute ecs-drive-db --local --file=./schema.sql",
+    "db:migrate:remote": "wrangler d1 execute ecs-drive-db --remote --file=./schema.sql",
+    "test": "node --test test/*.test.js",
+    "db:migrate-paths:local": "wrangler d1 execute ecs-drive-db --local --file=./migrations/001_add_file_paths.sql",
+    "db:migrate-paths:remote": "wrangler d1 execute ecs-drive-db --remote --file=./migrations/001_add_file_paths.sql",
+    "db:migrate-manager:local": "wrangler d1 execute ecs-drive-db --local --file=./migrations/002_add_manager_password.sql",
+    "db:migrate-manager:remote": "wrangler d1 execute ecs-drive-db --remote --file=./migrations/002_add_manager_password.sql"
+  },
+  "dependencies": {
+    "hono": "^4.6.9"
+  },
+  "devDependencies": {
+    "wrangler": "^3.83.0"
+  }
+}
