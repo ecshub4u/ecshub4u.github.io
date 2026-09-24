@@ -674,6 +674,13 @@ a { color: inherit; text-decoration: none; }
   width: 100%;
   max-width: 420px;
   padding: var(--space-5);
+  /* Long forms (create-folder: manager password + 2 recovery questions) can be
+     taller than the screen, especially on phones. Capping the modal's own
+     height and scrolling inside it keeps the buttons reachable instead of
+     the dialog running off both edges of the viewport. */
+  max-height: calc(100vh - var(--space-4) * 2); /* fallback for older browsers */
+  max-height: calc(100dvh - var(--space-4) * 2);
+  overflow-y: auto;
 }
 .modal h2 { font-size: var(--size-h3); margin-bottom: 4px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-4); }
